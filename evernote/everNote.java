@@ -441,42 +441,29 @@ public class everNote {
 				  	usage ();
 
 				default:
-				  	System.out.println ("Unrecognized command: " + procCode_g);
-				  	for (int i = 0; i < dir.length; ++i) {
-				    		if (procCode_g.contains (dir[i])) {
-				      			System.out.println ("Perhaps you meant: dir\n");
-				      			System.out.printf ("Example 1.1: en dir\n");
-							System.out.printf ("Example 1.2: en dir <book> [titlePattern]\n");
-							System.out.printf ("Example 1.3: en dir \"\" [titlePattern]\n");
-							System.out.printf ("             en dir \"\" Tuong\n");
-							System.out.printf ("             en dir \"\" \"Tuon*\"\n");
-							System.out.printf ("Example 1.4: en dir all [titlePattern]\n");
-							System.out.printf ("             en dir all Tuong\n");
-							System.out.printf ("             en dir all \"Tuon*\"\n");
-							System.out.println ("Enter help to list all possible commands");
-							break;
+				  System.out.println ("Unrecognized command: " + procCode_g);
+					for (int i = 0; i < dir.length; ++i) {
+			      if (procCode_g.contains (dir[i])) {
+			      	System.out.println ("Perhaps you meant: dir\n");
+			        usage ();
+    					break;
+      			}
+  					if (procCode_g.contains (grep[i])) {
+  						System.out.println ("Perhaps you meant: g[rep]\n");
+  						usage ();
+  						break;
+  					}
+					  if (procCode_g.contains (select[i])) {
+					  	System.out.println ("Perhaps you meant: s[elect]\n");
+							usage ();
+						  break;
 						}
-						if (procCode_g.contains (grep[i])) {
-							System.out.println ("Perhaps you meant: g[rep]\n");
-							System.out.printf ("Example 2.1: en g[rep] title <titlePattern>\n");
-							System.out.printf ("Example 2.2: en g[rep] tag <tagPattern>\n");
-							System.out.printf ("Example 2.3: en g[rep] body <bodyPattern>\n");
-							System.out.println ("Enter help to list all possible commands");
-							break;
-						}
-					    	if (procCode_g.contains (select[i])) {
-					    		System.out.println ("Perhaps you meant: s[elect]\n");
-				  			System.out.printf ("Example   3: en s[elect] <guid>\n");
-							System.out.println ("Enter help to list all possible commands");
-							break;
-						}
-					    	if (procCode_g.contains (del[i])) {
-					    		System.out.println ("Perhaps you meant: del\n");
-							System.out.printf ("Example   4: en del <guid>\n");
-							System.out.println ("Enter help to list all possible commands");
-							break;
-						}
-					}
+					  if (procCode_g.contains (del[i])) {
+					  	System.out.println ("Perhaps you meant: del\n");
+					  	usage ();
+						  break;
+            }
+				  }
 					return;
 			}
 		}
