@@ -436,6 +436,10 @@ public class everNote {
 				  doDelete (args [1]);
 				  break;
 
+        case "h":
+        case "help":
+          usage ();
+
 				default:
 				  System.out.println ("Unrecognized command: " + procCode_g);
 				  for (int i = 0; i < dir.length; ++i) {
@@ -449,28 +453,28 @@ public class everNote {
           		System.out.printf ("Example 1.4: en dir all [titlePattern]\n");
           		System.out.printf ("             en dir all Tuong\n");
           		System.out.printf ("             en dir all \"Tuon*\"\n");
+          		System.out.println ("Enter help to list all possible commands");
 				      break;
-				    } else if (procCode_g.contains (grep[i])) {
-  				    System.out.println ("Perhaps you meant: grep\n");
+				    }
+				    if (procCode_g.contains (grep[i])) {
+  				    System.out.println ("Perhaps you meant: g[rep]\n");
   				    System.out.printf ("Example 2.1: en g[rep] title <titlePattern>\n");
           		System.out.printf ("Example 2.2: en g[rep] tag <tagPattern>\n");
           		System.out.printf ("Example 2.3: en g[rep] body <bodyPattern>\n");
+          		System.out.println ("Enter help to list all possible commands");
   				    break;
-				    } else if (procCode_g.contains (select[i])) {
-  				    System.out.println ("Perhaps you meant: select\n");
+				    }
+				    if (procCode_g.contains (select[i])) {
+  				    System.out.println ("Perhaps you meant: s[elect]\n");
 		          System.out.printf ("Example   3: en s[elect] <guid>\n");
+		          System.out.println ("Enter help to list all possible commands");
   				    break;
-				    } else if (procCode_g.contains (del[i])) {
+				    }
+				    if (procCode_g.contains (del[i])) {
   				    System.out.println ("Perhaps you meant: del\n");
           		System.out.printf ("Example   4: en del <guid>\n");
+          		System.out.println ("Enter help to list all possible commands");
   				    break;
-  				  } else {
-  				    System.out.printf ("procCode can be one of the following:\n\n");
-          		System.out.printf ("    del        Delete note\n");
-          		System.out.printf ("    dir        List all notebooks or all notes under the specified notebook\n");
-          		System.out.printf ("    grep       Search notes\n");
-          		System.out.printf ("    select     Print to stdout\n");
-          		break;
   				  }
 				  }
 
