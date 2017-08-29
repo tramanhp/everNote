@@ -351,26 +351,26 @@ public class everNote {
 
 
 	public static void usage () {
-		System.out.printf ("Usage: en.user <procCode> [arg...]\n");
+		System.out.printf ("Usage: everNote <procCode> [arg...]\n");
 		System.out.printf ("where procCode can be one of the following:\n");
-		System.out.printf ("    del        Delete note\n");
+		System.out.printf ("    del        Delete note with its GUID\n");
 		System.out.printf ("    dir        List all notebooks or all notes under the specified notebook\n");
-		System.out.printf ("    grep       Search notes\n");
-		System.out.printf ("    select     Print to stdout\n");
+		System.out.printf ("    grep       Search all notes using the specified criteria\n");
+		System.out.printf ("    select     Print note with its GUID\n");
 		System.out.printf ("\n");
-		System.out.printf ("Example 1.1: en dir\n");
-		System.out.printf ("Example 1.2: en dir <book> [titlePattern]\n");
-		System.out.printf ("Example 1.3: en dir \"\" [titlePattern]\n");
-		System.out.printf ("             en dir \"\" Tuong\n");
-		System.out.printf ("             en dir \"\" \"Tuon*\"\n");
-		System.out.printf ("Example 1.4: en dir all [titlePattern]\n");
-		System.out.printf ("             en dir all Tuong\n");
-		System.out.printf ("             en dir all \"Tuon*\"\n");
-		System.out.printf ("Example 2.1: en g[rep] title <titlePattern>\n");
-		System.out.printf ("Example 2.2: en g[rep] tag <tagPattern>\n");
-		System.out.printf ("Example 2.3: en g[rep] body <bodyPattern>\n");
-		System.out.printf ("Example   3: en s[elect] <guid>\n");
-		System.out.printf ("Example   4: en del <guid>\n");
+		System.out.printf ("Example 1.1: everNote dir\n");
+		System.out.printf ("Example 1.2: everNote dir <notebook> [titlePattern]\n");
+		System.out.printf ("Example 1.3: everNote dir \"\" [titlePattern]\n");
+		System.out.printf ("             everNote dir \"\" Tuong\n");
+		System.out.printf ("             everNote dir \"\" \"Tuon*\"\n");
+		System.out.printf ("Example 1.4: everNote dir all [titlePattern]\n");
+		System.out.printf ("             everNote dir all Tuong\n");
+		System.out.printf ("             everNote dir all \"Tuon*\"\n");
+		System.out.printf ("Example 2.1: everNote g[rep] title <titlePattern>\n");
+		System.out.printf ("Example 2.2: everNote g[rep] tag <tagPattern>\n");
+		System.out.printf ("Example 2.3: everNote g[rep] body <bodyPattern>\n");
+		System.out.printf ("Example   3: everNote s[elect] <guid>\n");
+		System.out.printf ("Example   4: everNote del <guid>\n");
 		System.exit (0);
 	}
 
