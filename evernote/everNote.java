@@ -216,7 +216,7 @@ public class everNote {
 
 	static void doDelete (String guid) throws Exception {
 		noteStore_g.deleteNote (guid);
-		System.out.println ("Note deleted");
+		System.out.println ("Successfully deleted note");
 	}
 
 
@@ -286,7 +286,7 @@ public class everNote {
 		}
 
 		if (notebook == null) {
-			System.out.printf ("Notebook \"%s\" is not found.\n", bookTitle);
+			System.out.printf ("Notebook \"%s\" was not found.\n", bookTitle);
 			return;
 		}
 
