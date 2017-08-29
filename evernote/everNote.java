@@ -351,8 +351,7 @@ public class everNote {
 
 
 	public static void usage () {
-		System.out.printf ("Usage: en[_owner] <procCode> [arg...]\n");
-		System.out.printf ("where owner can be binh, ta, or tam;\n");
+		System.out.printf ("Usage: en.user <procCode> [arg...]\n");
 		System.out.printf ("where procCode can be one of the following:\n");
 		System.out.printf ("    del        Delete note\n");
 		System.out.printf ("    dir        List all notebooks or all notes under the specified notebook\n");
