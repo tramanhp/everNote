@@ -275,25 +275,25 @@ public class everNote {
 		bufPos += 7 + 8 + note.getTitle ().length ();
 
 		StringBuilder sbEnMedia = new StringBuilder ();
-        	String mimeType;
+        String mimeType;
 
 		for (int i = 0; i < attachFileNames.length; i++) {
 //			String mimeType = "image/png";
 
-			if (attachFileNames [i].indexOf (".mp3") > 0)
-				mimeType = "audio/mpeg";
-			else if (attachFileNames [i].indexOf (".jpg") > 0)
-				mimeType = "image/jpeg";
-			else if (attachFileNames [i].indexOf (".png") > 0)
-				mimeType = "image/png";
-			else
-				mimeType = "application/octet-stream";
+            if (attachFileNames [i].indexOf (".mp3") > 0)
+                mimeType = "audio/mpeg";
+            else if (attachFileNames [i].indexOf (".jpg") > 0)
+                mimeType = "image/jpeg";
+            else if (attachFileNames [i].indexOf (".png") > 0)
+                mimeType = "image/png";
+            else
+			    mimeType = "application/octet-stream";
 
 			Resource resource = new Resource ();
 			resource.setData (readFileAsData (attachFileNames [i]));
 			resource.setMime (mimeType);
 			ResourceAttributes attributes = new ResourceAttributes ();
-			attributes.setFileName (new File (attachFileNames [i]).getName ());
+			attributes.setFileName (attachFileNames [i]);
 //			attributes.setAttachment (true);	//Có cũng được; không có cũng được
 			resource.setAttributes (attributes);
 			note.addToResources (resource);
@@ -326,6 +326,7 @@ public class everNote {
 		newNoteGuid_g = createdNote.getGuid ();
 
 		System.out.println ("Successfully created a new note with GUID: " + newNoteGuid_g);
+		System.out.println ();
 	}
 
 
@@ -421,6 +422,7 @@ public class everNote {
 
 	public static void usage () {
 		System.out.printf ("Usage: en <procCode> [arg...]\n");
+		System.out.printf ("where owner can be binh, ta, or tam;\n");
 		System.out.printf ("where procCode can be one of the following:\n");
 		System.out.printf ("    dir        List all notebooks or all notes under the specified notebook\n");
 		System.out.printf ("    grep       Search all notes using the specified criteria\n");
@@ -582,5 +584,57 @@ public class everNote {
 		catch (TTransportException exc) {
 			System.err.println ("Networking error: " + exc.getMessage ());
 		}
+
+/***
+    try {
+      everNote_.listNotes ();
+      everNote_.createNote ();
+      everNote_.search ();
+      everNote_.updateNoteTag ();
     }
+	
+***/
+    }
+
 }
+
+/***
+DỊCH:
+	javac -cp evernote_api.jar -encoding utf8 everNote.java
+	java -cp evernote_api.jar;. -Dfile.encoding=UTF-8 everNote
+
+GHI CHÚ:
+1.	Real applications authenticate with Evernote using OAuth, but for the
+	purpose of exploring the API, you can get a developer token that allows
+	you to access your own Evernote account. To get a developer token, visit
+	https://sandbox.evernote.com/api/DeveloperToken.action
+
+2.	http://dev.evernote.com/doc/reference/javadoc/
+
+3.	Be mindful là khi argument là * thì Java (hoặc shell) sẽ bành trướng * thành list of files ở current directory.
+	VD:
+	System.out.printf ("Example 1.3: en d[ir] * [condition]\n");
+
+	Khi PQB chạy
+	java -cp evernote_api.jar;. everNote dir *
+
+	thì hàm doDirNotes (String bookGuid, String condition) báo cáo:
+	bookGuid: EDAMDemo.class, condition: EDAMDemo.java
+
+4.	Supported mimetype
+	image/gif
+	image/jpeg
+	image/png
+	audio/wav
+	audio/mpeg
+	audio/amr
+	application/pdf
+
+	Nguồn: http://dev.evernote.com/doc/articles/resources.php#types
+
+
+LỊCH SỬ:
+1.00	20170826	PQB
+		Dùng EDAMDemo.java làm sườn để xây lên. Dùng tiêu chuẩn của batnha.cs, ih.cs, tdput.java, resBuilder.mssql.cs.
+
+***/
