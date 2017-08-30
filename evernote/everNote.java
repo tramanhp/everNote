@@ -275,25 +275,25 @@ public class everNote {
 		bufPos += 7 + 8 + note.getTitle ().length ();
 
 		StringBuilder sbEnMedia = new StringBuilder ();
-        String mimeType;
+        	String mimeType;
 
 		for (int i = 0; i < attachFileNames.length; i++) {
 //			String mimeType = "image/png";
 
-            if (attachFileNames [i].indexOf (".mp3") > 0)
-                mimeType = "audio/mpeg";
-            else if (attachFileNames [i].indexOf (".jpg") > 0)
-                mimeType = "image/jpeg";
-            else if (attachFileNames [i].indexOf (".png") > 0)
-                mimeType = "image/png";
-            else
-			    mimeType = "application/octet-stream";
+			if (attachFileNames [i].indexOf (".mp3") > 0)
+				mimeType = "audio/mpeg";
+			else if (attachFileNames [i].indexOf (".jpg") > 0)
+				mimeType = "image/jpeg";
+			else if (attachFileNames [i].indexOf (".png") > 0)
+				mimeType = "image/png";
+			else
+				mimeType = "application/octet-stream";
 
 			Resource resource = new Resource ();
 			resource.setData (readFileAsData (attachFileNames [i]));
 			resource.setMime (mimeType);
 			ResourceAttributes attributes = new ResourceAttributes ();
-			attributes.setFileName (attachFileNames [i]);
+			attributes.setFileName (new File (attachFileNames [i]).getName ());
 //			attributes.setAttachment (true);	//Có cũng được; không có cũng được
 			resource.setAttributes (attributes);
 			note.addToResources (resource);
@@ -326,7 +326,6 @@ public class everNote {
 		newNoteGuid_g = createdNote.getGuid ();
 
 		System.out.println ("Successfully created a new note with GUID: " + newNoteGuid_g);
-		System.out.println ();
 	}
 
 
