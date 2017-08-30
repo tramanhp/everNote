@@ -18,8 +18,11 @@ import com.evernote.edam.type.Tag;
 import com.evernote.thrift.transport.TTransportException;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
 import java.security.MessageDigest;
 import java.util.Iterator;
 import java.util.List;
@@ -33,67 +36,9 @@ public class everNote {
 	static UserStoreClient userStore_g;
 	static NoteStoreClient noteStore_g;
 	static String newNoteGuid_g;
+	static int errorCnt_g;
 
 	static SimpleDateFormat formatter_i = new SimpleDateFormat ("yyyy-MM-dd HH:mm:ss");
-
-	/**
-	* Create a new note containing a little text and the Evernote icon.
-	*/
-	private void createNote () throws Exception {
-		//To create a new note, simply create a new Note object and fill in
-		//attributes such as the note's title.
-		Note note = new Note ();
-		note.setTitle ("Test note from EDAMDemo.java");
-
-		String fileName = "enlogo.png";
-		String mimeType = "image/png";
-
-		//To include an attachment such as an image in a note, first create a
-		//Resource
-		//for the attachment. At a minimum, the Resource contains the binary
-		//attachment
-		//data, an MD5 hash of the binary data, and the attachment MIME type.
-		//It can also
-		//include attributes such as filename and location.
-		Resource resource = new Resource ();
-		resource.setData (readFileAsData (fileName));
-		resource.setMime (mimeType);
-		ResourceAttributes attributes = new ResourceAttributes ();
-		attributes.setFileName (fileName);
-		resource.setAttributes (attributes);
-
-		//Now, add the new Resource to the note's list of resources
-		note.addToResources (resource);
-
-		//To display the Resource as part of the note's content, include an
-		//<en-media>
-		//tag in the note's ENML content. The en-media tag identifies the
-		//corresponding
-		//Resource using the MD5 hash.
-		String hashHex = bytesToHex (resource.getData ().getBodyHash ());
-
-		//The content of an Evernote note is represented using Evernote Markup
-		//Language
-		//(ENML). The full ENML specification can be found in the Evernote API
-		//Overview
-		//at http://dev.evernote.com/documentation/cloud/chapters/ENML.php
-		String content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-			+ "<!DOCTYPE en-note SYSTEM \"http://xml.evernote.com/pub/enml2.dtd\">"
-			+ "<en-note>"
-			+ "<span style=\"color:green;\">Here's the Evernote logo:</span><br/>"
-			+ "<en-media type=\"image/png\" hash=\"" + hashHex + "\"/>"
-			+ "</en-note>";
-		note.setContent (content);
-
-		//Finally, send the new note to Evernote using the createNote method
-		//The new Note object that is returned will contain server-generated
-		//attributes such as the new note's unique GUID.
-		Note createdNote = noteStore_g.createNote (note);
-		newNoteGuid_g = createdNote.getGuid ();
-
-		System.out.println ("Successfully created a new note with GUID: " + newNoteGuid_g);
-		System.out.println ();
-	}
 
 	/**
 	* Update the tags assigned to a note. This method demonstrates how only
@@ -146,21 +91,20 @@ public class everNote {
 		System.out.println ();
 	}
 
+
 	/**
 	* Helper method to read the contents of a file on disk and create a new Data
 	* object.
 	*/
 	private static Data readFileAsData (String fileName) throws Exception {
-		String filePath = new File (everNote.class.getResource (everNote.class.getCanonicalName () + ".class").getPath ()).getParent () + File.separator + fileName;
-		
-		//Read the full binary contents of the file
-		FileInputStream in = new FileInputStream (filePath);
+		FileInputStream in = new FileInputStream (fileName);
 		ByteArrayOutputStream byteOut = new ByteArrayOutputStream ();
 		byte [] block = new byte [10240];
 		int len;
 		while ((len = in.read(block)) >= 0) {
 		  byteOut.write (block, 0, len);
 		}
+
 		in.close ();
 		byte [] body = byteOut.toByteArray ();
 
@@ -173,6 +117,7 @@ public class everNote {
 		return data;
 	}
 
+
 	/**
 	* Helper method to convert a byte array to a hexadecimal string.
 	*/
@@ -180,11 +125,12 @@ public class everNote {
 		StringBuilder sb = new StringBuilder ();
 		for (byte hashByte : bytes) {
 			int intVal = 0xff & hashByte;
-			if (intVal < 0x10) {
+			if (intVal < 0x10)
 				sb.append ('0');
-			}
+
 			sb.append (Integer.toHexString (intVal));
 		}
+
 		return sb.toString ();
 	}
 
@@ -216,7 +162,7 @@ public class everNote {
 
 	static void doDelete (String guid) throws Exception {
 		noteStore_g.deleteNote (guid);
-		System.out.println ("Successfully deleted note");
+		System.out.println ("Note deleted");
 	}
 
 
@@ -260,6 +206,130 @@ public class everNote {
 	}
 
 
+	static String ReadFileUTF8 (File file) {
+		byte [] data;
+		InputStream fin = null;
+		String tmp;
+
+		try {
+			fin = new FileInputStream (file);
+			int filesize = (int) file.length ();
+			data = new byte [filesize];
+			fin.read (data, 0, filesize);
+			tmp = new String (data, "UTF-8");
+		}
+		catch (Exception e) {
+			System.out.println ("ERROR: ReadFileUTF8 - " + e.getMessage ());
+			e.printStackTrace ();
+			tmp = "";
+		}
+		finally {
+			try {
+				fin.close ();
+			}
+			catch (Exception exc) {
+			}
+		}
+		return tmp;
+	}
+
+
+	static String getValue (String buf, int bufPos, String tag) {
+		int begin, end;
+		String tmp;
+
+		begin = buf.indexOf ("<" + tag + ">", bufPos);
+		if (begin == - 1) {
+			System.out.println ("getValue: tag: <" + tag + ">: not found");
+			errorCnt_g++;
+			return "";
+		}
+
+		begin = begin + tag.length () + 2;
+
+		end = buf.indexOf ("</" + tag + ">", bufPos);
+		if (end == - 1) {
+			System.out.println ("getValue: tag: </" + tag + ">: not found");
+			errorCnt_g++;
+			return "";
+		}
+
+		tmp = buf.substring (begin, end);
+//		System.out.println ("getValue: " + tag + ": " + tmp);
+
+		if (tmp.equals ("${date time}"))
+			tmp = formatter_i.format (new Date ());
+
+		return tmp;
+	}
+
+
+	static void doInsert (String fileName, String [] attachFileNames) throws Exception {
+		String buf = ReadFileUTF8 (new File (fileName));
+		int bufPos = 0;
+
+		//To create a new note, simply create a new Note object and fill in
+		//attributes such as the note's title.
+		Note note = new Note ();
+		note.setTitle (getValue (buf, bufPos, "title"));
+		bufPos += 7 + 8 + note.getTitle ().length ();
+
+		StringBuilder sbEnMedia = new StringBuilder ();
+        String mimeType;
+
+		for (int i = 0; i < attachFileNames.length; i++) {
+//			String mimeType = "image/png";
+
+            if (attachFileNames [i].indexOf (".mp3") > 0)
+                mimeType = "audio/mpeg";
+            else if (attachFileNames [i].indexOf (".jpg") > 0)
+                mimeType = "image/jpeg";
+            else if (attachFileNames [i].indexOf (".png") > 0)
+                mimeType = "image/png";
+            else
+			    mimeType = "application/octet-stream";
+
+			Resource resource = new Resource ();
+			resource.setData (readFileAsData (attachFileNames [i]));
+			resource.setMime (mimeType);
+			ResourceAttributes attributes = new ResourceAttributes ();
+			attributes.setFileName (attachFileNames [i]);
+//			attributes.setAttachment (true);	//Có cũng được; không có cũng được
+			resource.setAttributes (attributes);
+			note.addToResources (resource);
+			String hashHex = bytesToHex (resource.getData ().getBodyHash ());
+			sbEnMedia.append ("<en-media type=\"" + mimeType + "\" hash=\"" + hashHex + "\" />");
+		}
+
+		StringBuilder sb = new StringBuilder ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+			"<!DOCTYPE en-note SYSTEM \"http://xml.evernote.com/pub/enml2.dtd\">" +
+			"<en-note>");
+
+		sb.append (getValue (buf, bufPos, "definition"));
+		if (attachFileNames.length > 0) {
+			sb.append ("<div><br /></div>\n");
+			sb.append (sbEnMedia.toString ());
+		}
+
+		sb.append ("</en-note>\n");
+//		System.out.println (sb.toString ());
+		note.setContent (sb.toString ());
+
+		String [] arr = getValue (buf, bufPos, "tags").split (",");
+		for (int i = 0; i < arr.length; i++)
+			note.addToTagNames (arr [i].trim ());
+
+		//Finally, send the new note to Evernote using the createNote method
+		//The new Note object that is returned will contain server-generated
+		//attributes such as the new note's unique GUID.
+		Note createdNote = noteStore_g.createNote (note);
+		newNoteGuid_g = createdNote.getGuid ();
+
+		System.out.println ("Successfully created a new note with GUID: " + newNoteGuid_g);
+		System.out.println ();
+	}
+
+
 	/***
 	Retrieve and display a list of the user's notes in the specified notebook
 	*/
@@ -286,7 +356,7 @@ public class everNote {
 		}
 
 		if (notebook == null) {
-			System.out.printf ("Notebook \"%s\" was not found.\n", bookTitle);
+			System.out.printf ("Notebook \"%s\" is not found.\n", bookTitle);
 			return;
 		}
 
@@ -351,31 +421,35 @@ public class everNote {
 
 
 	public static void usage () {
-		System.out.printf ("Usage: everNote <procCode> [arg...]\n");
+		System.out.printf ("Usage: en <procCode> [arg...]\n");
 		System.out.printf ("where procCode can be one of the following:\n");
-		System.out.printf ("    del        Delete note with its GUID\n");
 		System.out.printf ("    dir        List all notebooks or all notes under the specified notebook\n");
 		System.out.printf ("    grep       Search all notes using the specified criteria\n");
-		System.out.printf ("    select     Print note with its GUID\n");
+		System.out.printf ("    insert     Insert note in a specified notebook\n");
+		System.out.printf ("    select     Print note by its GUID\n");
+		System.out.printf ("    del        Delete note by its GUID\n");
 		System.out.printf ("\n");
-		System.out.printf ("Example 1.1: everNote dir\n");
-		System.out.printf ("Example 1.2: everNote dir <notebook> [titlePattern]\n");
-		System.out.printf ("Example 1.3: everNote dir \"\" [titlePattern]\n");
-		System.out.printf ("             everNote dir \"\" Tuong\n");
-		System.out.printf ("             everNote dir \"\" \"Tuon*\"\n");
-		System.out.printf ("Example 1.4: everNote dir all [titlePattern]\n");
-		System.out.printf ("             everNote dir all Tuong\n");
-		System.out.printf ("             everNote dir all \"Tuon*\"\n");
-		System.out.printf ("Example 2.1: everNote g[rep] title <titlePattern>\n");
-		System.out.printf ("Example 2.2: everNote g[rep] tag <tagPattern>\n");
-		System.out.printf ("Example 2.3: everNote g[rep] body <bodyPattern>\n");
-		System.out.printf ("Example   3: everNote s[elect] <guid>\n");
-		System.out.printf ("Example   4: everNote del <guid>\n");
+		System.out.printf ("Example 1.1: en dir\n");
+		System.out.printf ("Example 1.2: en dir <notebook> [titlePattern]\n");
+		System.out.printf ("Example 1.3: en dir \"\" [titlePattern]\n");
+		System.out.printf ("             en dir \"\" Tuong\n");
+		System.out.printf ("             en dir \"\" \"Tuon*\"\n");
+		System.out.printf ("Example 1.4: en dir all [titlePattern]\n");
+		System.out.printf ("             en dir all Tuong\n");
+		System.out.printf ("             en dir all \"Tuon*\"\n");
+		System.out.printf ("Example 2.1: en g[rep] title <titlePattern>\n");
+		System.out.printf ("Example 2.2: en g[rep] tag <tagPattern>\n");
+		System.out.printf ("Example 2.3: en g[rep] body <bodyPattern>\n");
+		System.out.printf ("Example   3: en s[elect] <guid>\n");
+		System.out.printf ("Example   4: en del <guid>\n");
+		System.out.printf ("Example   5: en i[nsert] <notebook> <xmlFile> [<attachFile>]...\n");
 		System.exit (0);
 	}
 
 
 	public static void main (String args []) throws Exception {
+		String [] arr;
+
 		if (args.length == 0)
 			usage ();
 		else if (args [0].equals ("-h") || args [0].equals ("-?"))
@@ -392,9 +466,9 @@ public class everNote {
 
 		procCode_g = args [0];
 		everNote everNote_ = new everNote (token_g);
-		
 		String dir [] = {"di", "du", "dj", "dk", "dl", "do", "ei", "wi", "si", "xi", "ci", "vi", "fi", "ri", "wu", "wo", "wj", "wk", "wl", "eu", "eo", "ej", "ek", "el", "ru", "ro", "rj", "rk", "rl", "fu", "fo", "fj", "fk", "fl", "vu", "vo", "vj", "vk", "vl", "cu", "co", "cj", "ck", "cl", "xu", "xo", "xj", "xk", "xl", "su", "so", "sj", "sk", "sl"};
 		String grep [] = {"ge", "gr", "gd", "gf", "gg", "gt", "rr", "re", "rd", "rf", "rg", "rt", "te", "tr", "tt", "td", "tf", "tg", "ye", "yr", "yt", "yd", "yf", "yg", "he", "hr", "ht", "hd", "hf", "hg", "ne", "nr", "nt", "nd", "nf", "ng", "be", "br", "bt", "bd", "bf", "bg", "ve", "vr", "vt", "vd", "vf", "vg", "fe", "fr", "ft", "fd", "ff", "fg"};
+		String insert [] = {"in", "ig", "ih", "ij", "ib", "im", "ug", "uh", "uj", "ub", "un", "um", "jg", "jh", "jj", "jb", "jn", "jm", "kg", "kh", "kj", "kb", "kn", "km", "lg", "lh", "lj", "lb", "ln", "lm", "og", "oh", "oj", "ob", "on", "om"};
 		String select [] = {"se", "sw", "ss", "sd", "sf", "sr", "qw", "qe", "qr", "qs", "qd", "qf", "aw", "ae", "ar", "as", "ad", "af", "zw", "ze", "zr", "zs", "zd", "zf", "xe", "xr", "xt", "xd", "xf", "xg", "ce", "cr", "ct", "cd", "cf", "cg", "de", "dr", "dt", "dd", "df", "dg", "ee", "er", "et", "ed", "ef", "eg", "ww", "we", "wr", "ws", "wd", "wf"};
 		String del [] = {"dw", "de", "dr", "ds", "dd", "df", "ww", "we", "wr", "ws", "wd", "wf", "sw", "se", "sr", "ss", "sd", "sf", "xw", "xe", "xr", "xs", "xd", "xf", "cw", "ce", "cr", "cs", "cd", "cf", "vw", "ve", "vr", "vs", "vd", "vf", "fw", "fe", "fr", "fs", "fd", "ff", "rw", "re", "rr", "rs", "rd", "rf", "ew", "ee", "er", "es", "ed", "ef"};
 
@@ -428,42 +502,66 @@ public class everNote {
 
 					doSelect (args [1]);
 					break;
-
+				
 				case "del":
-					if (args.length < 2)
-					    	usage ();
+				  if (args.length < 2)
+				    usage ();
 	  
-				  	doDelete (args [1]);
-				  	break;
+				  doDelete (args [1]);
+				  break;
 
+				case "i":
+				case "insert":
+					if (args.length < 3)
+						usage ();
+
+					if (args.length == 3)
+						arr = new String [] { };
+					else {
+						arr = new String [args.length - 3];
+						for (int i = 3; i < args.length; i++)
+							arr [i - 3] = args [i];
+					}
+						
+					doInsert (args [2], arr);
+					break;
+				
 				case "h":
 				case "help":
 				  	usage ();
+					break;
 
 				default:
-				  System.out.println ("Unrecognized command: " + procCode_g);
+					System.out.println ("Unrecognized command: " + procCode_g);
 					for (int i = 0; i < dir.length; ++i) {
-			      if (procCode_g.contains (dir[i])) {
-			      	System.out.println ("Perhaps you meant: dir\n");
-			        usage ();
-    					break;
-      			}
-  					if (procCode_g.contains (grep[i])) {
-  						System.out.println ("Perhaps you meant: g[rep]\n");
-  						usage ();
-  						break;
-  					}
-					  if (procCode_g.contains (select[i])) {
-					  	System.out.println ("Perhaps you meant: s[elect]\n");
+						if (procCode_g.contains (dir [i])) {
+							System.out.println ("Perhaps you meant: dir\n");
 							usage ();
-						  break;
+							break;
 						}
-					  if (procCode_g.contains (del[i])) {
-					  	System.out.println ("Perhaps you meant: del\n");
-					  	usage ();
-						  break;
-            }
-				  }
+						else if (procCode_g.contains (grep[i])) {
+							System.out.println ("Perhaps you meant: g[rep]\n");
+							usage ();
+							break;
+						}
+						else if (procCode_g.contains (insert [i])) {
+						    System.out.println ("Perhaps you meant: i[nsert]\n");
+						    usage ();
+						    break;
+						}
+						else if (procCode_g.contains (select [i])) {
+							System.out.println ("Perhaps you meant: s[elect]\n");
+							usage ();
+							break;
+						}
+						else if (procCode_g.contains (del[i])) {
+							System.out.println ("Perhaps you meant: del\n");
+							usage ();
+							break;
+						}
+					}
+
+					usage ();
 					return;
 			}
 		}
@@ -485,5 +583,5 @@ public class everNote {
 		catch (TTransportException exc) {
 			System.err.println ("Networking error: " + exc.getMessage ());
 		}
-	}
+    }
 }
